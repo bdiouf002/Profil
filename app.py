@@ -15,7 +15,7 @@ import streamlit as st
 BASE = Path(__file__).parent
 DATA = BASE / "data.json"
 CV_PDF = BASE / "cv.pdf"
-NAVY, NAVY_INK = "#193141", "#eef4f7"
+NAVY, NAVY_INK = "#F97316", "#FFFFFF"
 
 st.set_page_config(page_title="Bineta Diouf · Portfolio", layout="wide")
 
