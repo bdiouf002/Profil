@@ -20,7 +20,7 @@ NAVY, NAVY_INK = "#193141", "#FFFFFF"
 st.set_page_config(page_title="Bineta Diouf · Portfolio", layout="wide")
 
 st.markdown(
-    f"""
+    f""")
 /* Couleur principale du portfolio */
 :root {
     --primary-color: #F97316;
