@@ -75,7 +75,7 @@ st.markdown(
 /* Cartes des expériences et projets */
 [data-testid="stVerticalBlockBorderWrapper"] {{
     border-color: #FED7AA !important;
-}}
+}})
 
 /* CV : on conserve volontairement ses couleurs d'origine */
 .cv {{ display: grid; grid-template-columns: 1fr 2fr; border: 1px solid #d8e0e5;
