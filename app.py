@@ -1,7 +1,8 @@
-"""Profil en ligne : aperçu public du CV + mode édition protégé par mot de passe.
+"""Portfolio en ligne : profil, expériences, projets, formation, compétences et CV.
 
-Les visiteurs voient seulement l'aperçu. Le mode édition (barre latérale) permet de
-modifier le contenu puis de télécharger un nouveau data.json, à remplacer dans GitHub.
+Les visiteurs voient le portfolio. Le mode édition (barre latérale) est protégé par un mot de passe :
+il permet de modifier le contenu puis de télécharger un nouveau data.json, à remplacer dans GitHub.
+Pour proposer le CV en téléchargement, ajoutez un fichier cv.pdf à côté de app.py.
 """
 import hmac
 import json
@@ -11,10 +12,12 @@ from pathlib import Path
 
 import streamlit as st
 
-DATA = Path(__file__).parent / "data.json"
+BASE = Path(__file__).parent
+DATA = BASE / "data.json"
+CV_PDF = BASE / "cv.pdf"
 NAVY, NAVY_INK = "#193141", "#eef4f7"
 
-st.set_page_config(page_title="Bineta Diouf · Profil", layout="wide")
+st.set_page_config(page_title="Bineta Diouf · Portfolio", layout="wide")
 
 st.markdown(
     f"""
@@ -49,24 +52,118 @@ if "d" not in st.session_state:
 d = st.session_state.d
 
 
+# ------------------------------------------------------------------ outils
 def e(x) -> str:
     return escape(str(x or ""))
+
+
+def url(u: str) -> str:
+    u = (u or "").strip()
+    if not u:
+        return ""
+    return u if u.startswith(("http://", "https://")) else "https://" + u
 
 
 def dates(it: dict) -> str:
     return " – ".join(x for x in (it.get("start"), it.get("end")) if x)
 
 
-def bullets(it: dict) -> str:
+def meta_line(it: dict, *extra: str) -> str:
+    return " · ".join(x for x in (dates(it), it.get("place"), *extra) if x)
+
+
+# ------------------------------------------------------------------ pages publiques
+def header(d: dict) -> None:
+    p, pub = d["profile"], d.get("public", {})
+    st.title(p.get("name", ""))
+    if p.get("headline"):
+        st.markdown(f"**{p['headline']}**")
+    info = " · ".join(x for x in (p.get("city"), p.get("availability")) if x)
+    if info:
+        st.caption(info)
+    links = []
+    if p.get("linkedin"):
+        links.append(("LinkedIn", url(p["linkedin"])))
+    if p.get("github"):
+        links.append(("GitHub", url(p["github"])))
+    if p.get("website"):
+        links.append(("Site web", url(p["website"])))
+    if pub.get("show_email") and p.get("email"):
+        links.append(("E-mail", "mailto:" + p["email"]))
+    if links:
+        cols = st.columns([1] * len(links) + [max(1, 6 - len(links))])
+        for col, (label, href) in zip(cols, links):
+            col.link_button(label, href)
+    if pub.get("show_phone") and p.get("phone"):
+        st.caption(f"Téléphone : {p['phone']}")
+
+
+def page_about(d: dict) -> None:
+    p = d["profile"]
+    if p.get("summary"):
+        st.markdown(p["summary"])
+    if d["education"]:
+        st.subheader("Formation actuelle")
+        x = d["education"][0]
+        st.markdown(f"**{x['degree']}**  \n{x.get('school', '')} · {meta_line(x)}")
+    if d["skills"]:
+        st.subheader("Domaines")
+        for s in d["skills"]:
+            st.markdown(f"- **{s['group']}**")
+
+
+def page_experiences(d: dict) -> None:
+    if not d["experiences"]:
+        st.info("Aucune expérience pour l'instant.")
+    for x in d["experiences"]:
+        with st.container(border=True):
+            st.markdown(f"**{x.get('role', '')}** · {x.get('org', '')}")
+            st.caption(meta_line(x, x.get("kind", "")))
+            for b in x.get("bullets", []):
+                st.markdown(f"- {b}")
+
+
+def page_projects(d: dict) -> None:
+    if not d["projects"]:
+        st.info("Aucun projet pour l'instant.")
+    for x in d["projects"]:
+        with st.container(border=True):
+            st.markdown(f"**{x.get('title', '')}**")
+            st.caption(" · ".join(v for v in (x.get("context"), x.get("start")) if v))
+            if x.get("description"):
+                st.markdown(x["description"])
+            for b in x.get("bullets", []):
+                st.markdown(f"- {b}")
+            if x.get("tools"):
+                st.caption(f"Outils : {x['tools']}")
+            if x.get("link"):
+                st.link_button("Voir le projet", url(x["link"]))
+
+
+def page_education_skills(d: dict) -> None:
+    st.subheader("Formation")
+    for x in d["education"]:
+        with st.container(border=True):
+            st.markdown(f"**{x.get('degree', '')}**  \n{x.get('school', '')}")
+            st.caption(meta_line(x))
+    st.subheader("Compétences")
+    for s in d["skills"]:
+        st.markdown(f"**{s['group']}**  \n{s['items']}")
+    if d["languages"]:
+        st.subheader("Langues")
+        st.markdown("  \n".join(f"{l['name']} : {l.get('level', '')}" for l in d["languages"]))
+
+
+def bullets_html(it: dict) -> str:
     b = it.get("bullets") or []
     return "<ul>" + "".join(f"<li>{e(x)}</li>" for x in b) + "</ul>" if b else ""
 
 
-def entry(it: dict, title: str, line2: str = "") -> str:
-    meta = " · ".join(x for x in (dates(it), it.get("place")) if x)
+def cv_entry(it: dict, title: str, line2: str = "") -> str:
     tools = f'<div class="m">Outils : {e(it["tools"])}</div>' if it.get("tools") else ""
     sub = f"<br>{e(line2)}" if line2 else ""
-    return f'<div class="it"><b>{e(title)}</b>{sub}<div class="m">{e(meta)}</div>{bullets(it)}{tools}</div>'
+    return (f'<div class="it"><b>{e(title)}</b>{sub}<div class="m">{e(meta_line(it))}</div>'
+            f"{bullets_html(it)}{tools}</div>")
 
 
 def render_cv(d: dict) -> str:
@@ -83,42 +180,43 @@ def render_cv(d: dict) -> str:
         side += f"<h4>Disponibilité</h4><div>{e(p['availability'])}</div>"
     if d["education"]:
         side += "<h4>Formation</h4>" + "".join(
-            entry(x, x["degree"], x.get("school", "")) for x in d["education"]
-        )
+            cv_entry(x, x["degree"], x.get("school", "")) for x in d["education"])
     if d["skills"]:
         side += "<h4>Compétences</h4>" + "".join(
-            f'<div class="it"><b>{e(s["group"])}</b><br>{e(s["items"])}</div>' for s in d["skills"]
-        )
+            f'<div class="it"><b>{e(s["group"])}</b><br>{e(s["items"])}</div>' for s in d["skills"])
     if d["languages"]:
         side += "<h4>Langues</h4>" + "".join(
-            f"<div>{e(l['name'])} : {e(l.get('level'))}</div>" for l in d["languages"]
-        )
+            f"<div>{e(l['name'])} : {e(l.get('level'))}</div>" for l in d["languages"])
 
     main = ""
     if p.get("summary"):
         main += f"<h4>Profil</h4><p>{e(p['summary'])}</p>"
     if d["experiences"]:
         main += "<h4>Expériences professionnelles</h4>" + "".join(
-            entry(x, x["role"], x.get("org", "")) for x in d["experiences"]
-        )
+            cv_entry(x, x["role"], x.get("org", "")) for x in d["experiences"])
     if d["projects"]:
         main += "<h4>Projets</h4>" + "".join(
-            entry({**x, "end": ""}, x["title"], x.get("context", "")) for x in d["projects"]
-        )
+            cv_entry({**x, "end": "", "place": ""}, x["title"], x.get("context", "")) for x in d["projects"])
 
-    return (
-        f'<div class="cv"><aside><h1>{e(p.get("name"))}</h1>'
-        f'<div class="tag">{e(p.get("headline"))}</div>{contact_html}{side}</aside>'
-        f"<main>{main}</main></div>"
-    )
+    return (f'<div class="cv"><aside><h1>{e(p.get("name"))}</h1>'
+            f'<div class="tag">{e(p.get("headline"))}</div>{contact_html}{side}</aside>'
+            f"<main>{main}</main></div>")
 
 
-# ---------------------------------------------------------------- édition
+def page_cv(d: dict) -> None:
+    if CV_PDF.exists():
+        st.download_button("Télécharger mon CV (PDF)", CV_PDF.read_bytes(),
+                           file_name="CV_Bineta_Diouf.pdf", mime="application/pdf", type="primary")
+    st.markdown(render_cv(d), unsafe_allow_html=True)
+
+
+# ------------------------------------------------------------------ édition
 FIELDS = {
     "experiences": [("role", "Poste"), ("org", "Organisation"), ("kind", "Type"), ("start", "Début"),
                     ("end", "Fin"), ("place", "Lieu"), ("bullets", "Missions (une par ligne)")],
     "projects": [("title", "Titre"), ("context", "Contexte"), ("start", "Date"), ("tools", "Outils"),
-                 ("link", "Lien"), ("bullets", "Réalisations (une par ligne)")],
+                 ("link", "Lien (facultatif)"), ("description", "Description"),
+                 ("bullets", "Réalisations (une par ligne)")],
     "education": [("degree", "Diplôme"), ("school", "Établissement"), ("start", "Début"),
                   ("end", "Fin"), ("place", "Lieu")],
     "skills": [("group", "Rubrique"), ("items", "Compétences (séparées par des virgules)")],
@@ -126,7 +224,9 @@ FIELDS = {
 }
 LABELS = {"experiences": "Expériences", "projects": "Projets", "education": "Formation",
           "skills": "Compétences", "languages": "Langues"}
-TITLE = {"experiences": "role", "projects": "title", "education": "degree", "skills": "group", "languages": "name"}
+TITLE = {"experiences": "role", "projects": "title", "education": "degree",
+         "skills": "group", "languages": "name"}
+LONG = {"description"}
 
 
 def _remove(sec: str, i: int) -> None:
@@ -148,14 +248,15 @@ def _add(sec: str) -> None:
 
 
 def editor(d: dict) -> None:
-    st.subheader("Mode édition")
-    st.caption("Vos changements sont visibles tout de suite ici, mais ils ne sont pas enregistrés en ligne. "
-               "Téléchargez data.json en bas de page et remplacez le fichier dans GitHub.")
+    st.caption("Vos changements sont visibles tout de suite, mais ils ne sont pas enregistrés en ligne. "
+               "Téléchargez data.json en bas du mode édition et remplacez le fichier dans GitHub.")
     tabs = st.tabs(["Profil", *LABELS.values(), "Confidentialité"])
     with tabs[0]:
         p = d["profile"]
         for k, label in [("name", "Nom"), ("headline", "Accroche"), ("email", "E-mail"), ("phone", "Téléphone"),
-                         ("linkedin", "LinkedIn"), ("city", "Ville"), ("availability", "Disponibilité")]:
+                         ("linkedin", "Lien LinkedIn"), ("github", "Lien GitHub (facultatif)"),
+                         ("website", "Site web (facultatif)"), ("city", "Ville"),
+                         ("availability", "Disponibilité")]:
             p[k] = st.text_input(label, p.get(k, ""), key=f"p_{k}")
         p["summary"] = st.text_area("Résumé", p.get("summary", ""), key="p_summary")
     for tab, sec in zip(tabs[1:-1], LABELS):
@@ -167,6 +268,8 @@ def editor(d: dict) -> None:
                         if k == "bullets":
                             v = st.text_area(label, "\n".join(it.get(k, [])), key=key)
                             it[k] = [x.strip() for x in v.splitlines() if x.strip()]
+                        elif k in LONG:
+                            it[k] = st.text_area(label, it.get(k, ""), key=key)
                         else:
                             it[k] = st.text_input(label, it.get(k, ""), key=key)
                     c1, c2, c3 = st.columns(3)
@@ -182,7 +285,7 @@ def editor(d: dict) -> None:
                        file_name="data.json", mime="application/json", type="primary")
 
 
-# ---------------------------------------------------------------- accès
+# ------------------------------------------------------------------ accès
 def admin_password() -> str:
     try:
         return str(st.secrets.get("ADMIN_PASSWORD", ""))
@@ -203,6 +306,19 @@ with st.sidebar:
             st.error("Mot de passe incorrect.")
 
 if is_admin:
-    editor(d)
-    st.divider()
-st.markdown(render_cv(d), unsafe_allow_html=True)
+    with st.expander("Mode édition", expanded=True):
+        editor(d)
+
+header(d)
+t_about, t_exp, t_proj, t_edu, t_cv = st.tabs(
+    ["À propos", "Expériences", "Projets", "Formation et compétences", "CV"])
+with t_about:
+    page_about(d)
+with t_exp:
+    page_experiences(d)
+with t_proj:
+    page_projects(d)
+with t_edu:
+    page_education_skills(d)
+with t_cv:
+    page_cv(d)
