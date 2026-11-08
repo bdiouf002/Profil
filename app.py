@@ -93,14 +93,14 @@ st.markdown(
 .cv ul {{ margin: 4px 0 0; padding-left: 16px; }}
 .cv p, .cv div {{ font-size: 13px; }}
 @media (max-width: 700px) {{ .cv {{ grid-template-columns: 1fr; }} }}
- 
+
 .profile-header {{
     display: flex;
     align-items: center;
     gap: 25px;
     margin-bottom: 25px;
 }}
- 
+
 .profile-photo {{
     width: 150px;
     height: 150px;
@@ -108,7 +108,7 @@ st.markdown(
     border-radius: 50%;
     border: 4px solid #F97316;
 }}
- 
+
 .profile-info {{
     flex: 1;
 }}
@@ -118,8 +118,6 @@ st.markdown(
         text-align: center;
     }}
 }}
-
-
 
 </style>
 """,
@@ -159,34 +157,21 @@ def meta_line(it: dict, *extra: str) -> str:
 # ------------------------------------------------------------------ pages publiques
 def header(d: dict) -> None:
     p, pub = d["profile"], d.get("public", {})
-    photo_path = BASE / "photo.jpg"
-
+    # Cherche une photo nommée "photo" (jpg, jpeg, png ou webp), majuscules ou minuscules
+    mimes = {".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".png": "image/png", ".webp": "image/webp"}
+    photo_path = next((f for f in sorted(BASE.iterdir())
+                       if f.is_file() and f.stem.lower() == "photo" and f.suffix.lower() in mimes), None)
     photo_html = ""
-    
-    if photo_path.exists():
+    if photo_path:
         image_base64 = base64.b64encode(photo_path.read_bytes()).decode()
-    
-        photo_html = f"""
-            <img
-                src="data:image/jpeg;base64,{image_base64}"
-                class="profile-photo"
-            >
-        """
-    
+        mime = mimes[photo_path.suffix.lower()]
+        photo_html = f'<img src="data:{mime};base64,{image_base64}" class="profile-photo" alt="Photo">'
     st.markdown(
-        f"""
-        <div class="profile-header">
-            {photo_html}
-            <div class="profile-info">
-                <h1>{e(p.get("name", ""))}</h1>
-                <p>{e(p.get("headline", ""))}</p>
-            </div>
-        </div>
-        """,
-        unsafe_allow_html=True
+        '<div class="profile-header">' + photo_html + '<div class="profile-info">'
+        + f'<h1>{e(p.get("name", ""))}</h1><p><b>{e(p.get("headline", ""))}</b></p>'
+        + "</div></div>",
+        unsafe_allow_html=True,
     )
-    if p.get("headline"):
-        st.markdown(f"**{p['headline']}**")
     info = " · ".join(x for x in (p.get("city"), p.get("availability")) if x)
     if info:
         st.caption(info)
@@ -216,7 +201,7 @@ def page_about(d: dict) -> None:
         x = d["education"][0]
         st.markdown(f"**{x['degree']}**  \n{x.get('school', '')} · {meta_line(x)}")
     if d["skills"]:
-        st.subheader("Domaines")
+        st.subheader("Mes compétences")
         for s in d["skills"]:
             st.markdown(f"- **{s['group']}**")
 
