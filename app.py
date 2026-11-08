@@ -200,11 +200,10 @@ def page_about(d: dict) -> None:
         st.subheader("Formation actuelle")
         x = d["education"][0]
         st.markdown(f"**{x['degree']}**  \n{x.get('school', '')} · {meta_line(x)}")
-    if d["skills"]:
-        st.subheader("Mes compétences")
-        for s in d["skills"]:
-            st.markdown(f"- **{s['group']}**")
-
+    if d.get("search_domains"):
+        st.subheader("Domaines de recherche")
+        for x in d["search_domains"]:
+            st.markdown(f"- **{x}**")
 
 def page_experiences(d: dict) -> None:
     if not d["experiences"]:
