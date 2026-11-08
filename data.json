@@ -11,7 +11,7 @@
     "linkedin": "https://www.linkedin.com/in/bineta-diouf-4386a7298",
     "city": "Niort",
     "availability": "À partir de mai 2027, pour 2 à 4 mois",
-    "summary": "Étudiante en première année du diplôme d'ingénieur en science de la donnée à l'ENSAR (Niort), après un BUT Science des données. Je recherche un stage de 2 à 4 mois dans le domaine de la qualité des données.",
+    "summary": "Étudiante en première année du diplôme d'ingénieur en science de la donnée à l'ENSAR (Niort), après un BUT Science des données. Je recherche un stage de 2 à 4 mois dès mai 2027 et d’une alternance dès septembre 2027 dans le domaine de la Data.",
     "github": "",
     "website": ""
   },
@@ -75,6 +75,50 @@
       ]
     }
   ],
+  {
+  "id": "restauration",
+  "role": "Équipier polyvalent en restauration",
+  "org": "Le Resto",
+  "kind": "Emploi",
+  "start": "07/2023",
+  "end": "06/2026",
+  "place": "Lons, France",
+  "bullets": [
+    "Accueil des clients",
+    "Service en salle",
+    "Plonge et rangement de la vaisselle",
+    "Évacuation des poubelles et entretien des locaux"
+  ]
+},
+{
+  "id": "garde-enfants",
+  "role": "Garde d'enfants",
+  "org": "",
+  "kind": "Emploi",
+  "start": "12/2022",
+  "end": "01/2023",
+  "place": "Orthez, France",
+  "bullets": [
+    "Récupération des enfants à leur centre de formation",
+    "Surveillance des enfants et attention à leur bien-être",
+    "Préparation et service des repas",
+    "Respect de l'hygiène et de la sécurité des enfants"
+  ]
+},
+{
+  "id": "aide-menagere",
+  "role": "Aide ménagère",
+  "org": "Carrefour",
+  "kind": "Emploi",
+  "start": "10/2022",
+  "end": "12/2022",
+  "place": "Lescar, France",
+  "bullets": [
+    "Nettoyage des locaux du magasin",
+    "Aspiration des espaces de vente",
+    "Nettoyage des espaces internes : bureaux, toilettes"
+  ]
+}
   "projects": [
     {
       "id": "sncf",
