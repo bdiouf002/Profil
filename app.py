@@ -93,31 +93,33 @@ st.markdown(
 .cv ul {{ margin: 4px 0 0; padding-left: 16px; }}
 .cv p, .cv div {{ font-size: 13px; }}
 @media (max-width: 700px) {{ .cv {{ grid-template-columns: 1fr; }} }}
-
-.profile-header {
+ 
+.profile-header {{
     display: flex;
     align-items: center;
     gap: 25px;
     margin-bottom: 25px;
-}
-
-.profile-photo {
+}}
+ 
+.profile-photo {{
     width: 150px;
     height: 150px;
     object-fit: cover;
     border-radius: 50%;
     border: 4px solid #F97316;
-}
-
-.profile-info {
+}}
+ 
+.profile-info {{
     flex: 1;
-}
+}}
 @media (max-width: 600px) {{
     .profile-header {{
         flex-direction: column;
         text-align: center;
     }}
 }}
+
+
 
 </style>
 """,
