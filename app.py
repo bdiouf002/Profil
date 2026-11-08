@@ -1,96 +1,123 @@
-"""Portfolio en ligne : profil, expériences, projets, formation, compétences et CV.
+            f'<div class="tag">{e(p.get("headline"))}</div>{contact_html}{side}</aside>'
+            f"<main>{main}</main></div>")
 
-Les visiteurs voient le portfolio. Le mode édition (barre latérale) est protégé par un mot de passe :
-il permet de modifier le contenu puis de télécharger un nouveau data.json, à remplacer dans GitHub.
-Pour proposer le CV en téléchargement, ajoutez un fichier cv.pdf à côté de app.py.
-"""
-import hmac
-import json
-import uuid
-from html import escape
-from pathlib import Path
 
-import streamlit as st
+def page_cv(d: dict) -> None:
+    if CV_PDF.exists():
+        st.download_button("Télécharger mon CV (PDF)", CV_PDF.read_bytes(),
+                           file_name="CV_Bineta_Diouf.pdf", mime="application/pdf", type="primary")
+    st.markdown(render_cv(d), unsafe_allow_html=True)
 
-BASE = Path(__file__).parent
-DATA = BASE / "data.json"
-CV_PDF = BASE / "cv.pdf"
-NAVY, NAVY_INK = "#193141", "#eef4f7"
 
-st.set_page_config(page_title="Bineta Diouf · Portfolio", layout="wide")
+# ------------------------------------------------------------------ édition
+FIELDS = {
+    "experiences": [("role", "Poste"), ("org", "Organisation"), ("kind", "Type"), ("start", "Début"),
+                    ("end", "Fin"), ("place", "Lieu"), ("bullets", "Missions (une par ligne)")],
+    "projects": [("title", "Titre"), ("context", "Contexte"), ("start", "Date"), ("tools", "Outils"),
+                 ("link", "Lien (facultatif)"), ("description", "Description"),
+                 ("bullets", "Réalisations (une par ligne)")],
+    "education": [("degree", "Diplôme"), ("school", "Établissement"), ("start", "Début"),
+                  ("end", "Fin"), ("place", "Lieu")],
+    "skills": [("group", "Rubrique"), ("items", "Compétences (séparées par des virgules)")],
+    "languages": [("name", "Langue"), ("level", "Niveau")],
+}
+LABELS = {"experiences": "Expériences", "projects": "Projets", "education": "Formation",
+          "skills": "Compétences", "languages": "Langues"}
+TITLE = {"experiences": "role", "projects": "title", "education": "degree",
+         "skills": "group", "languages": "name"}
+LONG = {"description"}
 
-st.markdown(
-    f"""
-<style>
-/* Mise en page générale du portfolio */
-.block-container {{ max-width: 1000px; padding-top: 2rem; }}
 
-/* Couleurs du site : orange et blanc */
-:root {{
-    --primary-color: #F97316;
-}}
+def _remove(sec: str, i: int) -> None:
+    del st.session_state.d[sec][i]
 
-/* Titre principal et sous-titres */
-.stApp h1, .stApp h2, .stApp h3 {{
-    color: #C2410C;
-}}
 
-/* Boutons Streamlit */
-.stButton button, .stDownloadButton button, .stLinkButton a {{
-    border-color: #F97316 !important;
-    border-radius: 8px !important;
-}}
-.stButton button[kind="primary"],
-.stDownloadButton button[kind="primary"] {{
-    background-color: #F97316 !important;
-    color: #FFFFFF !important;
-}}
-.stButton button:hover, .stDownloadButton button:hover,
-.stLinkButton a:hover {{
-    border-color: #C2410C !important;
-    color: #C2410C !important;
-}}
+def _move(sec: str, i: int, step: int) -> None:
+    a = st.session_state.d[sec]
+    j = i + step
+    if 0 <= j < len(a):
+        a[i], a[j] = a[j], a[i]
 
-/* Onglets du portfolio : seul l'onglet actif est orange */
-.stTabs [data-baseweb="tab"] {{
-    color: #344054;
-}}
-.stTabs [data-baseweb="tab"][aria-selected="true"] {{
-    color: #EA580C !important;
-}}
-.stTabs [data-baseweb="tab-highlight"] {{
-    background-color: #F97316 !important;
-}}
 
-/* Liens */
-.stApp a {{
-    color: #EA580C !important;
-}}
+def _add(sec: str) -> None:
+    item = {"id": uuid.uuid4().hex[:8], **{k: "" for k, _ in FIELDS[sec]}}
+    if "bullets" in item:
+        item["bullets"] = []
+    st.session_state.d[sec].append(item)
 
-/* Cases à cocher et curseurs */
-.stCheckbox label, .stRadio label {{
-    accent-color: #F97316;
-}}
 
-/* Cartes des expériences et projets */
-[data-testid="stVerticalBlockBorderWrapper"] {{
-    border-color: #FED7AA !important;
-}}
+def editor(d: dict) -> None:
+    st.caption("Vos changements sont visibles tout de suite, mais ils ne sont pas enregistrés en ligne. "
+               "Téléchargez data.json en bas du mode édition et remplacez le fichier dans GitHub.")
+    tabs = st.tabs(["Profil", *LABELS.values(), "Confidentialité"])
+    with tabs[0]:
+        p = d["profile"]
+        for k, label in [("name", "Nom"), ("headline", "Accroche"), ("email", "E-mail"), ("phone", "Téléphone"),
+                         ("linkedin", "Lien LinkedIn"), ("github", "Lien GitHub (facultatif)"),
+                         ("website", "Site web (facultatif)"), ("city", "Ville"),
+                         ("availability", "Disponibilité")]:
+            p[k] = st.text_input(label, p.get(k, ""), key=f"p_{k}")
+        p["summary"] = st.text_area("Résumé", p.get("summary", ""), key="p_summary")
+    for tab, sec in zip(tabs[1:-1], LABELS):
+        with tab:
+            for i, it in enumerate(d[sec]):
+                with st.expander(it.get(TITLE[sec]) or "Sans titre"):
+                    for k, label in FIELDS[sec]:
+                        key = f"{sec}_{it['id']}_{k}"
+                        if k == "bullets":
+                            v = st.text_area(label, "\n".join(it.get(k, [])), key=key)
+                            it[k] = [x.strip() for x in v.splitlines() if x.strip()]
+                        elif k in LONG:
+                            it[k] = st.text_area(label, it.get(k, ""), key=key)
+                        else:
+                            it[k] = st.text_input(label, it.get(k, ""), key=key)
+                    c1, c2, c3 = st.columns(3)
+                    c1.button("Monter", key=f"up_{sec}_{it['id']}", on_click=_move, args=(sec, i, -1))
+                    c2.button("Descendre", key=f"dn_{sec}_{it['id']}", on_click=_move, args=(sec, i, 1))
+                    c3.button("Supprimer", key=f"rm_{sec}_{it['id']}", on_click=_remove, args=(sec, i))
+            st.button("Ajouter", key=f"add_{sec}", on_click=_add, args=(sec,))
+    with tabs[-1]:
+        pub = d.setdefault("public", {})
+        pub["show_email"] = st.checkbox("Afficher l'e-mail aux visiteurs", pub.get("show_email", True))
+        pub["show_phone"] = st.checkbox("Afficher le téléphone aux visiteurs", pub.get("show_phone", False))
+    st.download_button("Télécharger data.json", json.dumps(d, ensure_ascii=False, indent=2),
+                       file_name="data.json", mime="application/json", type="primary")
 
-/* CV : on conserve volontairement ses couleurs d'origine */
-.cv {{ display: grid; grid-template-columns: 1fr 2fr; border: 1px solid #d8e0e5;
-      border-radius: 4px; overflow: hidden; box-shadow: 0 8px 30px rgba(0,0,0,.10); }}
-.cv aside {{ background: {NAVY}; color: {NAVY_INK}; padding: 26px 20px; }}
-.cv main {{ background: #fff; color: #1c2b35; padding: 26px 24px; }}
-.cv h1 {{ font-size: 26px; line-height: 1.1; margin: 0 0 8px; color: {NAVY_INK}; }}
-.cv .tag {{ font-size: 15px; opacity: .9; margin-bottom: 18px; }}
-.cv h4 {{ margin: 20px 0 6px; font-size: 12px; letter-spacing: .1em; text-transform: uppercase; }}
-.cv aside h4 {{ border-bottom: 1px solid rgba(255,255,255,.25); padding-bottom: 4px; color: {NAVY_INK}; }}
-.cv main h4 {{ border-bottom: 2px solid {NAVY}; padding-bottom: 4px; color: #1c2b35; }}
-.cv .it {{ font-size: 13px; margin-bottom: 12px; overflow-wrap: anywhere; }}
-.cv .m {{ font-size: 12px; opacity: .75; }}
-.cv ul {{ margin: 4px 0 0; padding-left: 16px; }}
-.cv p, .cv div {{ font-size: 13px; }}
-@media (max-width: 700px) {{ .cv {{ grid-template-columns: 1fr; }} }}
-</style>
-""",)
+
+# ------------------------------------------------------------------ accès
+def admin_password() -> str:
+    try:
+        return str(st.secrets.get("ADMIN_PASSWORD", ""))
+    except Exception:  # pas de fichier secrets
+        return ""
+
+
+with st.sidebar:
+    st.markdown("### Espace propriétaire")
+    expected = admin_password()
+    if not expected:
+        st.caption("Mode édition désactivé : aucun mot de passe configuré.")
+        is_admin = False
+    else:
+        given = st.text_input("Mot de passe", type="password")
+        is_admin = bool(given) and hmac.compare_digest(given.encode(), expected.encode())
+        if given and not is_admin:
+            st.error("Mot de passe incorrect.")
+
+if is_admin:
+    with st.expander("Mode édition", expanded=True):
+        editor(d)
+
+header(d)
+t_about, t_exp, t_proj, t_edu, t_cv = st.tabs(
+    ["À propos", "Expériences", "Projets", "Formation et compétences", "CV"])
+with t_about:
+    page_about(d)
+with t_exp:
+    page_experiences(d)
+with t_proj:
+    page_projects(d)
+with t_edu:
+    page_education_skills(d)
+with t_cv:
+    page_cv(d)
