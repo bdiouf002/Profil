@@ -20,40 +20,36 @@ NAVY, NAVY_INK = "#193141", "#FFFFFF"
 st.set_page_config(page_title="Bineta Diouf · Portfolio", layout="wide")
 
 st.markdown(
-    f""")
-/* Couleur principale du portfolio */
-:root {
-    --primary-color: #F97316;
-}
+    f"""
+    <style>
+    .block-container {{ max-width: 1000px; padding-top: 2rem; }}
 
-/* Boutons */
-.stButton button,
-.stLinkButton a {
-    border-color: #F97316 !important;
-}
+    /* Couleur orange du site */
+    :root {{
+        --primary-color: #F97316;
+    }}
 
-/* Boutons principaux */
-.stButton button[kind="primary"],
-button[kind="primary"] {
-    background-color: #F97316 !important;
-    color: white !important;
-}
+    /* Boutons */
+    .stButton button {{
+        background-color: #F97316 !important;
+        color: white !important;
+    }}
 
-/* Onglet sélectionné */
-button[data-baseweb="tab"][aria-selected="true"] {
-    color: #F97316 !important;
-    border-bottom-color: #F97316 !important;
-}
+    /* Onglets */
+    button[data-baseweb="tab"][aria-selected="true"] {{
+        color: #F97316 !important;
+        border-bottom-color: #F97316 !important;
+    }}
 
-/* Liens */
-a {
-    color: #F97316 !important;
-}
+    /* Liens */
+    a {{
+        color: #F97316 !important;
+    }}
 
-/* Cases cochées et éléments sélectionnés */
-input[type="checkbox"] {
-    accent-color: #F97316;
-}
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
 
 <style>
 .block-container {{ max-width: 1000px; padding-top: 2rem; }}
