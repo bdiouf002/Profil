@@ -113,11 +113,7 @@ st.markdown(
     flex: 1;
 }
 
-@media (max-width: 600px) {
-    .profile-header {
-        flex-direction: column;
-        text-align: center;
-    }
+
 }
 </style>
 """,
