@@ -15,12 +15,46 @@ import streamlit as st
 BASE = Path(__file__).parent
 DATA = BASE / "data.json"
 CV_PDF = BASE / "cv.pdf"
-NAVY, NAVY_INK = "#F97316", "#FFFFFF"
+NAVY, NAVY_INK = "#193141", "#FFFFFF"
 
 st.set_page_config(page_title="Bineta Diouf · Portfolio", layout="wide")
 
 st.markdown(
     f"""
+/* Couleur principale du portfolio */
+:root {
+    --primary-color: #F97316;
+}
+
+/* Boutons */
+.stButton button,
+.stLinkButton a {
+    border-color: #F97316 !important;
+}
+
+/* Boutons principaux */
+.stButton button[kind="primary"],
+button[kind="primary"] {
+    background-color: #F97316 !important;
+    color: white !important;
+}
+
+/* Onglet sélectionné */
+button[data-baseweb="tab"][aria-selected="true"] {
+    color: #F97316 !important;
+    border-bottom-color: #F97316 !important;
+}
+
+/* Liens */
+a {
+    color: #F97316 !important;
+}
+
+/* Cases cochées et éléments sélectionnés */
+input[type="checkbox"] {
+    accent-color: #F97316;
+}
+
 <style>
 .block-container {{ max-width: 1000px; padding-top: 2rem; }}
 .cv {{ display: grid; grid-template-columns: 1fr 2fr; border: 1px solid #d8e0e5;
