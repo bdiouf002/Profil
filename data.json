@@ -144,8 +144,8 @@
     {
       "id": "club FC Luy de Béarn",
       "title": "Analyse statistique",
-      "context": "Concours",
       "start": "01/2023",
+      "end": "06/2023"
       "tools": "R, Excel",
       "link": "",
       "bullets": [
@@ -155,7 +155,25 @@
          "Interprétation des résultats et présentation collective des conclusions."
       ],
       "description": "Analyse statistique de l'évolution du nombre de licenciés du club FC Luy de Béarn afin d'étudier les tendances et l'évolution des effectifs."
+    },
+     {
+      "id": "Lycée Saint John Perse",
+      "title": "Enquête et études statistiques",
+      "start": "10/2022",
+      "end": "01/2023"
+      "tools": "Sphinx, Excel, SAS, R, Canva",
+      "link": "",
+      "bullets": [
+         "Conception et création du questionnaire avec Sphinx.",
+         "Collecte et saisie des données auprès des lycéens.",
+         "Nettoyage et traitement des données avec Excel, SAS et R.",
+         "Réalisation d'analyses statistiques et interprétation des résultats.",
+         "Présentation des résultats sous Canva.",
+         "Amélioration des questionnaires afin d'obtenir des données plus précises et pertinentes."
+      ],
+      "description": "Réalisation d'une enquête statistique visant à étudier les habitudes d'utilisation d'Internet et leur influence sur les activités d'apprentissage des lycéens."
     }
+    
   ],
   "education": [
     {
