@@ -140,6 +140,21 @@
         "Création d'un tableau de bord Power BI (mesures, indicateurs de suivi)"
       ],
       "description": "Concours de data sur le trafic SNCF : nettoyage des données puis création d'un tableau de bord de suivi."
+    },
+    {
+      "id": "club FC Luy de Béarn",
+      "title": "Analyse statistique",
+      "context": "Concours",
+      "start": "01/2023",
+      "tools": "R, Excel",
+      "link": "",
+      "bullets": [
+         "Nettoyage et préparation des données relatives aux licenciés à l'aide de R.",
+         "Traitement et analyse statistique des données.",
+         "Création d'indicateurs clés (KPI) pour suivre l'évolution des licenciés.",
+         "Interprétation des résultats et présentation collective des conclusions."
+      ],
+      "description": "Analyse statistique de l'évolution du nombre de licenciés du club FC Luy de Béarn afin d'étudier les tendances et l'évolution des effectifs."
     }
   ],
   "education": [
